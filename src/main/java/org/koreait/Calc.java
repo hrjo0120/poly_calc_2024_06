@@ -11,6 +11,7 @@ public class Calc {
         }
 
         boolean needPlus = exp.contains("+");
+        boolean needMinus = exp.contains("-");
         boolean needMulti = exp.contains("*");
 
         boolean needToCompound = needPlus && needMulti;   //섞여있어?!
@@ -26,7 +27,7 @@ public class Calc {
             return run(newExp);         //재귀함수, 처음으로 돌아가서 값을 처리함.
         }
 
-        if (needPlus) {
+        if (needPlus||needMinus) {
             exp = exp.replaceAll("- ", "+ -");// -로 들어온 경우 + -로 치환
 
             String[] bits = exp.split(" \\+ "); // + 로 자름
