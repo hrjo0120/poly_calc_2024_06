@@ -9,7 +9,7 @@ public class Calc {
         exp = stripOuterBracjets(exp);
 
         // 단일 항이 들어오면 바로 리턴
-        if(!exp.contains(" ")){ //" " 공백이 있는지 없는지 체크
+        if (!exp.contains(" ")) { //" " 공백이 있는지 없는지 체크
             return Integer.parseInt(exp);
         }
 
@@ -58,9 +58,14 @@ public class Calc {
     }
 
     private static String stripOuterBracjets(String exp) {
-        if(exp.charAt(0) == '(' && exp.charAt(exp.length()-1) == ')') { //괄호가 존재한다면
-            exp = exp.substring(1, exp.length()-1);     //문자열을 index[1] 부터 intex[length-1]까지 자른다.
+        int outerBracketsCount = 0;
+
+        while (exp.charAt(0) == '(' && exp.charAt(exp.length() - 1 - outerBracketsCount) == ')') {// 괄호의 쌍을 찾기 위해 범위가 exp.length() - 1 - outerBracketsCount가 된다.
+            outerBracketsCount++;
         }
-        return exp;
+
+        if(outerBracketsCount == 0) return exp;
+
+        return exp.substring(outerBracketsCount, exp.length() - outerBracketsCount);
     }
 }
