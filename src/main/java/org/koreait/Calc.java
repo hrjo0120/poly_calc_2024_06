@@ -5,6 +5,9 @@ import java.util.stream.Collectors;
 
 public class Calc {
     public static int run(String exp) {
+        // 괄호 제거
+        exp = stripOuterBracjets(exp);
+
         // 단일 항이 들어오면 바로 리턴
         if(!exp.contains(" ")){ //" " 공백이 있는지 없는지 체크
             return Integer.parseInt(exp);
@@ -16,7 +19,7 @@ public class Calc {
         boolean needToCompound = needPlus && needMulti;   //섞여있어?!
 
         if (needToCompound) {   //True일때 실행.
-            String[] bits = exp.split(" \\+ "); //{"20", "10", "5 * 2"}
+            String[] bits = exp.split(" \\+ ");
 
             String newExp = Arrays.stream(bits)
                     .mapToInt(Calc::run)        //map: 1대1 대응 하는것. 정수화 하는 것. , run을 실행
@@ -52,5 +55,12 @@ public class Calc {
 
         throw new RuntimeException("해석 불가 : 올바른 계산식이 아니야");
 
+    }
+
+    private static String stripOuterBracjets(String exp) {
+        if(exp.charAt(0) == '(' && exp.charAt(exp.length()-1) == ')') { //괄호가 존재한다면
+            exp = exp.substring(1, exp.length()-1);     //문자열을 index[1] 부터 intex[length-1]까지 자른다.
+        }
+        return exp;
     }
 }
