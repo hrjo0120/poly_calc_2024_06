@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 public class Calc {
     public static int run(String exp) {
-        // (20 + 20) + 20
+        // (10 + 20) * 3
         exp = exp.trim();   //양 옆의  쓸데없는 공백 제거 ex) " 20 + 20 " => "20 + 20", 가운데에 있는 공백을 없애주지는 않음.
         // 괄호 제거
         exp = stripOuterBrackets(exp);
@@ -30,15 +30,22 @@ public class Calc {
                 } else if (exp.charAt(i) == ')') {  // exp에 괄호(")") 1개가 있을 경우
                     bracketsCount--;                // bracketsCount가 감소된다.
                 }
-                 if (bracketsCount == 0) {           // 따라서 bracketsCount 가 0이면,
-                     splitPointIndex = i;            // splitPointIntex를 자르는 위치로 지정함.
+                if (bracketsCount == 0) {           // 따라서 bracketsCount 가 0이면,
+                    splitPointIndex = i;            // splitPointIntex를 자르는 위치로 지정함.
                     break;
                 }
             }
             String firstExp = exp.substring(0, splitPointIndex + 1);
             String secondExp = exp.substring(splitPointIndex + 4);
 
-            return Calc.run(firstExp) + Calc.run(secondExp);
+            //String operator = exp.substring(splitPointIndex + 1, splitPointIndex + 4); // 본인 해결,부호를 잘라내서 저장 => 값이 저장되는 형태 " * "
+            char operator = exp.charAt(splitPointIndex + 2);        // (10 + 20) * 3 : exp의 부호를 찾아내서 저장. splitPointIndex가 firstExp 까지 잘리는 곳이니 거기에 +2를 하면 부호의 위치가 나오게 된다.
+
+            exp = Calc.run(firstExp) + " " + operator + " " + Calc.run(secondExp);
+
+            //return Calc.run(Calc.run(firstExp) + operator + Calc.run(secondExp));     // 본인 해결
+            return Calc.run(exp);
+
         } else if (needToCompound) {   //True일때 실행.
             String[] bits = exp.split(" \\+ ");
 
@@ -77,7 +84,6 @@ public class Calc {
         throw new
 
                 RuntimeException("해석 불가 : 올바른 계산식이 아니야");
-
 
     }
 
