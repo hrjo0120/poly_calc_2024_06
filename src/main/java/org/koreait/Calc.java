@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 public class Calc {
     public static int run(String exp) {
-        // (10 + 20) * 3
+        // 10 + (10 + 5)
         exp = exp.trim();   //양 옆의  쓸데없는 공백 제거 ex) " 20 + 20 " => "20 + 20", 가운데에 있는 공백을 없애주지는 않음.
         // 괄호 제거
         exp = stripOuterBrackets(exp);
@@ -20,30 +20,16 @@ public class Calc {
         boolean needToSplit = exp.contains("(") || exp.contains(")");
         boolean needToCompound = needPlus && needMulti;   //섞여있어?!
 
-        if (needToSplit) {              //괄호가 존재하는 식이 넘어왔을 때. 쌍이되는 괄호의 갯수를 센다.
-            int bracketsCount = 0;      //아직 카운트 하지 않았으니 0으로 둔다.
-            int splitPointIndex = -1;   // 아직 못찾음.
+        if (needToSplit) {              //문장을 잘라야할 때 실행된다.
+            int splitPointIndex = findSplitPointIndex(exp); //
 
-            for (int i = 0; i < exp.length(); i++) {
-                if (exp.charAt(i) == '(') {         // exp에 괄호("(") 1개가 있을경우
-                    bracketsCount++;                // bracketsCount가 증가된다.
-                } else if (exp.charAt(i) == ')') {  // exp에 괄호(")") 1개가 있을 경우
-                    bracketsCount--;                // bracketsCount가 감소된다.
-                }
-                if (bracketsCount == 0) {           // 따라서 bracketsCount 가 0이면,
-                    splitPointIndex = i;            // splitPointIntex를 자르는 위치로 지정함.
-                    break;
-                }
-            }
-            String firstExp = exp.substring(0, splitPointIndex + 1);
-            String secondExp = exp.substring(splitPointIndex + 4);
+            String firstExp = exp.substring(0, splitPointIndex);
+            String secondExp = exp.substring(splitPointIndex + 1);
 
-            //String operator = exp.substring(splitPointIndex + 1, splitPointIndex + 4); // 본인 해결,부호를 잘라내서 저장 => 값이 저장되는 형태 " * "
-            char operator = exp.charAt(splitPointIndex + 2);        // (10 + 20) * 3 : exp의 부호를 찾아내서 저장. splitPointIndex가 firstExp 까지 잘리는 곳이니 거기에 +2를 하면 부호의 위치가 나오게 된다.
+            char operator = exp.charAt(splitPointIndex);
 
             exp = Calc.run(firstExp) + " " + operator + " " + Calc.run(secondExp);
 
-            //return Calc.run(Calc.run(firstExp) + operator + Calc.run(secondExp));     // 본인 해결
             return Calc.run(exp);
 
         } else if (needToCompound) {   //True일때 실행.
@@ -81,10 +67,33 @@ public class Calc {
             return sum;
         }
 
-        throw new
+        throw new RuntimeException("해석 불가 : 올바른 계산식이 아니야");
 
-                RuntimeException("해석 불가 : 올바른 계산식이 아니야");
+    }
 
+    private static int findSplitPointIndex(String exp) { // 어디서 잘라야하는지 대신 찾아주는 역할
+        int index = findSplitPointIndexBy(exp, '+');
+
+        if (index >= 0) return index;
+
+        return findSplitPointIndexBy(exp, '*');
+    }
+
+    private static int findSplitPointIndexBy(String exp, char findChar) {   //
+        int brackesCount = 0;
+
+        for (int i = 0; i < exp.length(); i++) {
+            char c = exp.charAt(i);
+
+            if (c == '(') {
+                brackesCount++;
+            } else if (c == ')') {
+                brackesCount--;
+            } else if (c == findChar) {
+                if (brackesCount == 0) return i;
+            }
+        }
+        return -1;
     }
 
     private static String stripOuterBrackets(String exp) {
