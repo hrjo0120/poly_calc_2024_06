@@ -4,12 +4,19 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class Calc {
+    public static boolean debug = false;     //평소에 개발할때는 false, 확인할때는 true로 두고 확인해보기
+    public static int runCallCount = 0;
+
     public static int run(String exp) {
-        // 10 + (10 + 5)
+        runCallCount++;
+
         exp = exp.trim();   //양 옆의  쓸데없는 공백 제거 ex) " 20 + 20 " => "20 + 20", 가운데에 있는 공백을 없애주지는 않음.
         // 괄호 제거
         exp = stripOuterBrackets(exp);
 
+        if(debug) {
+            System.out.printf("exp(%d) : %s\n", runCallCount, exp);
+        }
         // 단일 항이 들어오면 바로 리턴
         if (!exp.contains(" ")) { //" " 공백이 있는지 없는지 체크
             return Integer.parseInt(exp);
@@ -21,7 +28,7 @@ public class Calc {
         boolean needToCompound = needPlus && needMulti;   //섞여있어?!
 
         if (needToSplit) {              //문장을 잘라야할 때 실행된다.
-            int splitPointIndex = findSplitPointIndex(exp); //
+            int splitPointIndex = findSplitPointIndex(exp);
 
             String firstExp = exp.substring(0, splitPointIndex);
             String secondExp = exp.substring(splitPointIndex + 1);
@@ -72,11 +79,11 @@ public class Calc {
     }
 
     private static int findSplitPointIndex(String exp) { // 어디서 잘라야하는지 대신 찾아주는 역할
-        int index = findSplitPointIndexBy(exp, '+');
+        int index = findSplitPointIndexBy(exp, '-');    // 찾아야하는 문자 "+"
 
-        if (index >= 0) return index;
+        if (index >= 0) return index;                             // 문자를 찾으면 그 문자의 index를 리턴.
 
-        return findSplitPointIndexBy(exp, '*');
+        return findSplitPointIndexBy(exp, '*');         // 아닐 경우 리턴값으로 *을 찾는 함수 실행
     }
 
     private static int findSplitPointIndexBy(String exp, char findChar) {   //
