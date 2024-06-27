@@ -155,4 +155,16 @@ public class CalcTests {
     void t25() {
         assertThat(Calc.run("-(8 + 2) * -(7 + 3) + 5")).isEqualTo(105);
     }
+
+    @Test
+    @DisplayName("5 - (1 + 5) == -1")
+    void t26() {
+        assertThat(Calc.run("5 - (1 + 5)")).isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("3 - 1 + (1 - (4 _ 1 - (1 - 1))) == 0")
+    void t27() {
+        assertThat(Calc.run("3 - 1 + (1 - (4 - 1 - (1 - 1)))")).isEqualTo(0);
+    }
 }

@@ -4,11 +4,15 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 
 public class Calc {
-    public static boolean debug = false;     //평소에 개발할때는 false, 확인할때는 true로 두고 확인해보기
+    public static boolean debug = true;     //평소에 개발할때는 false, 확인할때는 true로 두고 확인해보기
     public static int runCallCount = 0;
 
     public static int run(String exp) {
-        // -(8 + 2) * -(7 + 3) + 5 == 105
+        return _run(exp, 0);
+    }
+
+    public static int _run(String exp, int depth) {
+        // 3 - 1 + (1 - (4 _ 1 - (1 - 1)))
         runCallCount++;
 
         exp = exp.trim();   //양 옆의  쓸데없는 공백 제거 ex) " 20 + 20 " => "20 + 20", 가운데에 있는 공백을 없애주지는 않음.
@@ -24,6 +28,7 @@ public class Calc {
         exp = stripOuterBrackets(exp);
 
         if (debug) {
+            System.out.print(" ".repeat(depth * 4));
             System.out.printf("exp(%d) : %s\n", runCallCount, exp);
         }
         // 단일 항이 들어오면 바로 리턴
@@ -37,6 +42,7 @@ public class Calc {
         boolean needToCompound = needToPlus && needToMulti;   //섞여있어?!
 
         if (needToSplit) {              //문장을 잘라야할 때 실행된다.
+            exp = exp.replaceAll("- ", "+ -");
             int splitPointIndex = findSplitPointIndex(exp);
 
             String firstExp = exp.substring(0, splitPointIndex);
@@ -44,22 +50,23 @@ public class Calc {
 
             char operator = exp.charAt(splitPointIndex);
 
-            exp = Calc.run(firstExp) + " " + operator + " " + Calc.run(secondExp);
+            exp = Calc._run(firstExp, depth + 1) + " " + operator + " " + Calc._run(secondExp, depth + 1);
 
-            return Calc.run(exp);
+            return Calc._run(exp, depth + 1);
         } else if (needToCompound) {   //True일때 실행.
             String[] bits = exp.split(" \\+ ");
 
             String newExp = Arrays.stream(bits)
-                    .mapToInt(Calc::run)        //map: 1대1 대응 하는것. 정수화 하는 것. , run을 실행
-                    .mapToObj(e -> e + "")      //객체가 아닌데 객체로 바꿔야될 때
+                    .mapToInt(e -> Calc._run(e, depth + 1))        //map: 1대1 대응 하는것. 정수화 하는 것. , run을 실행
+                    .mapToObj(e -> e + "")                              //객체가 아닌데 객체로 바꿔야될 때
                     .collect(Collectors.joining(" + "));    // " + "로 엮는다.
 
-            return run(newExp);         //재귀함수, 처음으로 돌아가서 값을 처리함.
+            return _run(newExp, depth + 1);         //재귀함수, 처음으로 돌아가서 값을 처리함.
         }
 
         if (needToPlus) {
             exp = exp.replaceAll("- ", "+ -");// -로 들어온 경우 + -로 치환
+
 
             String[] bits = exp.split(" \\+ "); // + 로 자름
 
