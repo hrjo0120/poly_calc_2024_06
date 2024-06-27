@@ -8,7 +8,7 @@ public class Calc {
     public static int runCallCount = 0;
 
     public static int run(String exp) {
-        // -(10 + 5) == -15
+        // -(8 + 2) * -(7 + 3) + 5 == 105
         runCallCount++;
 
         exp = exp.trim();   //양 옆의  쓸데없는 공백 제거 ex) " 20 + 20 " => "20 + 20", 가운데에 있는 공백을 없애주지는 않음.
@@ -16,9 +16,12 @@ public class Calc {
         exp = stripOuterBrackets(exp);
 
         // 만약에 -( 패턴이라면, 내가 갖고있는 코드는 해석할 수 없으므로 해석할 수 있는 형태로 수정
-        if (isCaseMinusBracket(exp)) {
-            exp = exp.substring(1) + " * -1";
+        int[] pos = null;
+        while ((pos = findCaseMinusBracket(exp)) != null) {
+            exp = changeMinusBracket(exp, pos[0], pos[1]);
         }
+
+        exp = stripOuterBrackets(exp);
 
         if (debug) {
             System.out.printf("exp(%d) : %s\n", runCallCount, exp);
@@ -28,10 +31,10 @@ public class Calc {
             return Integer.parseInt(exp);
         }
 
-        boolean needPlus = exp.contains("+") || exp.contains("-");
-        boolean needMulti = exp.contains("*");
+        boolean needToPlus = exp.contains(" + ") || exp.contains(" - ");
+        boolean needToMulti = exp.contains(" * ");
         boolean needToSplit = exp.contains("(") || exp.contains(")");
-        boolean needToCompound = needPlus && needMulti;   //섞여있어?!
+        boolean needToCompound = needToPlus && needToMulti;   //섞여있어?!
 
         if (needToSplit) {              //문장을 잘라야할 때 실행된다.
             int splitPointIndex = findSplitPointIndex(exp);
@@ -44,7 +47,6 @@ public class Calc {
             exp = Calc.run(firstExp) + " " + operator + " " + Calc.run(secondExp);
 
             return Calc.run(exp);
-
         } else if (needToCompound) {   //True일때 실행.
             String[] bits = exp.split(" \\+ ");
 
@@ -56,7 +58,7 @@ public class Calc {
             return run(newExp);         //재귀함수, 처음으로 돌아가서 값을 처리함.
         }
 
-        if (needPlus) {
+        if (needToPlus) {
             exp = exp.replaceAll("- ", "+ -");// -로 들어온 경우 + -로 치환
 
             String[] bits = exp.split(" \\+ "); // + 로 자름
@@ -68,7 +70,7 @@ public class Calc {
             }
 
             return sum;
-        } else if (needMulti) {
+        } else if (needToMulti) {
             String[] bits = exp.split(" \\* ");
 
             int sum = 1;
@@ -84,26 +86,40 @@ public class Calc {
 
     }
 
-    private static boolean isCaseMinusBracket(String exp) {
-        // -(로 시작하는지 아닌지 판별
-        if (exp.startsWith("-(") == false) return false;
+    private static String changeMinusBracket(String exp, int startPos, int endPos) {
+        String head = exp.substring(0, startPos);
+        String body = "(" + exp.substring(startPos + 1, endPos + 1) + " * -1)";
+        String tail = exp.substring(endPos + 1);
 
-        // 괄호로 감싸져 있는지?
-        int bracketsCount = 0;
+        exp = head + body + tail;
 
-        for (int i = 0; i < exp.length(); i++) {
-            char c = exp.charAt(i);
+        return exp;
+    }
 
-            if (c == '(') {
-                bracketsCount++;
-            } else if (c == ')') {
-                bracketsCount--;
-            }
-            if (bracketsCount == 0) {
-                if (exp.length() - 1 == i) return true;
+    private static int[] findCaseMinusBracket(String exp) {
+        for (int i = 0; i < exp.length() - 1; i++) {
+            if (exp.charAt(i) == '-' && exp.charAt(i + 1) == '(') {
+                // 발견
+
+                int bracketsCount = 1;
+
+                for (int j = i + 2; j < exp.length(); j++) {
+                    char c = exp.charAt(j);
+
+                    if (c == '(') {
+                        bracketsCount++;
+                    } else if (c == ')') {
+                        bracketsCount--;
+                    }
+
+                    if (bracketsCount == 0) {
+                        return new int[]{i, j};
+                    }
+                }
             }
         }
-        return false;
+
+        return null;
     }
 
     private static int findSplitPointIndex(String exp) { // 어디서 잘라야하는지 대신 찾아주는 역할
@@ -114,7 +130,7 @@ public class Calc {
         return findSplitPointIndexBy(exp, '*');         // 아닐 경우 리턴값으로 *을 찾는 함수 실행
     }
 
-    private static int findSplitPointIndexBy(String exp, char findChar) {   //
+    private static int findSplitPointIndexBy(String exp, char findChar) {
         int bracketsCount = 0;
 
         for (int i = 0; i < exp.length(); i++) {
@@ -132,14 +148,26 @@ public class Calc {
     }
 
     private static String stripOuterBrackets(String exp) {
-        int outerBracketsCount = 0;
+        if (exp.charAt(0) == '(' && exp.charAt(exp.length() - 1) == ')') {
+            int bracketsCount = 0;
 
-        while (exp.charAt(0) == '(' && exp.charAt(exp.length() - 1 - outerBracketsCount) == ')') {// 괄호의 쌍을 찾기 위해 범위가 exp.length() - 1 - outerBracketsCount가 된다.
-            outerBracketsCount++;
+            for (int i = 0; i < exp.length(); i++) {
+                if (exp.charAt(i) == '(') {
+                    bracketsCount++;
+                } else if (exp.charAt(i) == ')') {
+                    bracketsCount--;
+                }
+
+                if (bracketsCount == 0) {
+                    if (exp.length() == i + 1) {
+                        return stripOuterBrackets(exp.substring(1, exp.length() - 1));
+                    }
+
+                    return exp;
+                }
+            }
         }
 
-        if (outerBracketsCount == 0) return exp;
-
-        return exp.substring(outerBracketsCount, exp.length() - outerBracketsCount);
+        return exp;
     }
 }
